@@ -61,40 +61,38 @@ dsh 自带的删除通常只把会话移出列表，磁盘上的 `sessions/` 目
 
 ## 安装
 
-> **分发方式**：本插件不从 npm 注册表分发，请用下面的 Git 方式安装。本包无构建步骤（`lib/` 即产物），git 安装不会触发 pnpm 的构建放行（`allowBuilds`）提示。
+> **分发方式**：本插件按 dsh 的**组合包（bundle）**规范分发——仓库根自带 `cordis.patch.yml`（组合包 patch），`package.json` 用 `dsh.bundle.patch` 指向它，因此可以直接从 Git 安装，装好就自动注册插件行，不需要手工改 profile 的 `cordis.patch.yml`。本包无构建步骤（`lib/` 即产物），git 安装不会触发 pnpm 的构建放行（`allowBuilds`）提示。
 
-### 通过 Git 安装（推荐）
+### 通过插件页安装（推荐）
 
-在 dsh 的 **设置 → 插件 → 安装插件** 对话框中粘贴：
+1. 打开侧栏「插件」页，点「添加插件」（或右上角菜单里的「安装第三方插件」）。
+2. 在输入框粘贴：
 
 ```
 github:bbpeople/dsh-archived-session-cleaner
 ```
 
-命令行等价形式（`--profile` 为必填参数，取值通常是 `desktop` 或 `web`，即 `~/.dsh/profiles/` 下的目录名）：
+3. 安装默认启用；**设置 → 插件** 里出现「会话清理」标签即可使用（界面没刷新就重启一次 dsh）。
+
+### 命令行安装
+
+`--profile` 为必填参数，取值通常是 `desktop` 或 `web`，即 `~/.dsh/profiles/` 下的目录名：
 
 ```bash
 dsh plugin --profile desktop add github:bbpeople/dsh-archived-session-cleaner
 ```
 
-安装后确认 profile 的 `cordis.patch.yml` 中有这一行（`name` 必须与实际安装的包名一致）：
+安装后重启 dsh（profile 未启用 HMR 时，profile 变更在重启后才生效）。
 
-```yaml
-- id: session-cleaner
-  name: dsh-archived-session-cleaner
+### 本地开发安装
+
+把本地仓库作为依赖链进 profile（改完代码重装或重启即可，无需再手动建 junction）：
+
+```bash
+dsh plugin --profile desktop add link:D:\xuexi\test\dsh-archived-session-cleaner
 ```
 
-然后重启 dsh。
-
-### 本地开发（junction 软链）
-
-```powershell
-New-Item -ItemType Junction `
-  -Path "$HOME\.dsh\profiles\node_modules\dsh-archived-session-cleaner" `
-  -Target "<本仓库目录>"
-```
-
-同样在 `cordis.patch.yml` 里加上上面那段配置行（此时 `name` 用 junction 的名字），然后重启 dsh。
+> 旧版手工安装方式（`~/.dsh/plugins/` 放包 + `profiles/node_modules` 建 junction + 手写 profile 的 `cordis.patch.yml`）在一段时间内仍然可用，但已不再必要。
 
 ## 使用
 
@@ -128,9 +126,10 @@ host 侧在 `webServer` 上注册前缀路由 `/sclean`（相对当前页面路�
 
 ## 卸载
 
-1. 从 profile 的 `cordis.patch.yml` 中删掉 `session-cleaner` 那一行；
-2. 移除已安装的包：`dsh plugin --profile desktop remove dsh-archived-session-cleaner`（或在「设置 → 插件」里卸载）；以 junction 方式本地安装的直接删掉那个 junction；
-3. 重启 dsh。
+1. 在「插件」页卸载，或执行 `dsh plugin --profile desktop remove dsh-archived-session-cleaner`——组合包自带的插件行会随包一起移除，profile 的 `cordis.patch.yml` 不用手改；
+2. 重启 dsh。
+
+> 若你当初是按旧版手工方式装的（`~/.dsh/plugins/` + junction + 手写 profile 的 `cordis.patch.yml`），还要额外删掉那个 junction 与 `- id: session-cleaner` 那一行。
 
 卸载插件**不会**动你的会话数据。
 
@@ -159,7 +158,7 @@ MIT © bbpeople
 
 A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that adds a **Session Cleaner** tab under *Settings → Plugins*. It lists archived sessions grouped by project (title, last-activity time, on-disk size), with search, project filtering, unarchive and permanent delete. Deleting removes the on-disk session directory, the archived marker in `workspace.json`, the projection cache and the message-feedback entries; unarchiving only drops the archived marker.
 
-Distributed via Git — `dsh plugin --profile <name> add github:bbpeople/dsh-archived-session-cleaner` — and not published to the npm registry. It is unrelated to the third-party `dsh-session-cleaner` package on npm.
+Distributed as a dsh **bundle** through Git — add `github:bbpeople/dsh-archived-session-cleaner` on the Plugins page, or run `dsh plugin --profile <name> add github:bbpeople/dsh-archived-session-cleaner` — and not published to the npm registry. It is unrelated to the third-party `dsh-session-cleaner` package on npm.
 
 Safety: `/sclean` enforces a same-origin check (CSRF protection) and never returns local absolute paths (the project label is a display title, the project id is a SHA-256 prefix); only sessions in the archived set can be deleted or unarchived; sessions with an unterminated turn are skipped; session ids are validated against `^[A-Za-z0-9_-]{1,128}$`; JSON edits are written atomically and verified afterwards.
 

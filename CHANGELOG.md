@@ -3,6 +3,17 @@
 本文件记录本项目的所有重要变更，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.2.2] - 2026-10-23
+
+### 修复
+
+- **无法通过插件管理器安装**：此前包里没有组合包 patch、`package.json` 也未声明 `dsh.bundle`，插件管理器在检查阶段会以 `not-a-bundle` 拒绝 `github:` / 本地目录安装（只能手工 junction + 手改 profile）。现在仓库根新增 `cordis.patch.yml`（把 `session-cleaner` 行插入 roster），`package.json` 增加 `dsh.bundle.patch`，安装后由组合包自动注册插件行。
+- `files` 加入 `cordis.patch.yml`，保证打包时带上组合包 patch。
+
+### 变更
+
+- README 安装/卸载章节按组合包方式重写：插件页粘贴 `github:bbpeople/dsh-archived-session-cleaner` 或 `dsh plugin --profile <name> add ...` 即可，本地开发可用 `link:`。
+
 ## [1.2.1] - 2026-10-23
 
 ### 修复
