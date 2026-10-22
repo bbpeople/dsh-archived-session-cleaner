@@ -31,6 +31,10 @@ dsh 自带的删除通常只把会话移出列表，磁盘上的 `sessions/` 目
 
 发布到公共环境前值得逐条知道的行为约束：
 
+- **`/sclean` 同源校验（CSRF 防护）**：dsh 宿主的 `webServer` 不提供服务器级认证或来源策略，命名路由会被直接交给 handler；因此本插件自行校验来源——`Sec-Fetch-Site` 存在时必须是 `same-origin` 或 `none`，`Origin` 存在时其 host 必须与请求 `Host` 一致，`Origin: null` 一律拒绝。跨源请求返回 `403`。
+  - **已知限制**：该校验拦的是**跨源 CSRF**；**DNS rebinding 不在覆盖范围内**——攻击者域名解析到本机时，其 `Host` 与 `Origin` 彼此自洽，仅凭请求头无法与正常访问区分。若要防这一类，必须依赖外层访问控制。
+  - **若把 dsh 绑定到非回环地址，请自行在外层加访问控制**（宿主不会代劳）。
+- **不返回本机绝对路径**：`GET /sclean/list` 只返回会话 id、状态与占用大小，不含目录路径。
 - **只删归档集内的会话**：id 不在 `global.archivedSessionIds` 中一律拒绝，避免误删活跃会话。
 - **运行中的会话拒绝删除**：判定依据是事件日志——最后一个 `turn/start` 之后没有 `turn/end`，即视为 agent 正在执行或已中断，直接跳过。仅凭 `sessions.get(id)` 是否存在**不**作为「使用中」判据（归档后实例仍在，会造成误判）。
 - **会话 id 白名单**：`^[A-Za-z0-9_-]{1,128}$`，杜绝路径穿越。
@@ -72,7 +76,7 @@ host 侧在 `webServer` 上注册前缀路由 `/sclean`（相对当前页面路�
 
 | 方法与路径 | 说明 | 响应 |
 |---|---|---|
-| `GET /sclean/list` | 归档会话清单（含磁盘状态） | `{ archived: [{ id, live, onDisk, diskSize, dirPath }], totalArchived }` |
+| `GET /sclean/list` | 归档会话清单（含磁盘状态） | `{ archived: [{ id, live, onDisk, diskSize }], totalArchived }` |
 | `POST /sclean/delete` | body `{ "ids": ["<会话id>", …] }` | `{ results: [{ id, ok, error?, diskRemoved?, memSynced?, resynced?, steps? }], deleted, skipped }` |
 
 `POST` 的每一条结果都带独立状态：`diskRemoved` 表示磁盘目录是否被删；`steps` 逐项记录 `workspace` / `projcache` / `projfile` / `feedback` 四步的成败——**某一步失败不会跳过其余步骤**。
@@ -117,6 +121,6 @@ A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin tha
 
 Published as `dsh-archived-session-cleaner`; it is unrelated to the third-party `dsh-session-cleaner` package on npm.
 
-Safety: only sessions in the archived set can be deleted; sessions with an unterminated turn are skipped; session ids are validated against `^[A-Za-z0-9_-]{1,128}$`; JSON edits are written atomically and verified afterwards.
+Safety: `/sclean` enforces a same-origin check (CSRF protection) and never returns local absolute paths; only sessions in the archived set can be deleted; sessions with an unterminated turn are skipped; session ids are validated against `^[A-Za-z0-9_-]{1,128}$`; JSON edits are written atomically and verified afterwards.
 
 Host routes: `GET /sclean/list`, `POST /sclean/delete`. Licensed under MIT.
