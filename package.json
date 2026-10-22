@@ -1,7 +1,7 @@
 {
   "name": "dsh-archived-session-cleaner",
-  "version": "1.1.0",
-  "description": "DeepSeek Harness 插件：列出并永久删除已归档的会话（磁盘数据、归档标记、投影缓存与反馈记录一并清理）。",
+  "version": "1.2.0",
+  "description": "DeepSeek Harness 插件：按项目分组列出已归档的会话，支持搜索、筛选、取消归档与永久删除（磁盘数据、归档标记、投影缓存与反馈记录一并清理）。",
   "type": "module",
   "main": "lib/index.js",
   "exports": {

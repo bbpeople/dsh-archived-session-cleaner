@@ -3,6 +3,30 @@
 本文件记录本项目的所有重要变更，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.2.0] - 2026-10-23
+
+### 新增
+
+- 界面形态对齐 dsh 自带的「已归档的聊天」页：**按项目分组**（组头显示项目名与「N 个会话」，组内每行之间用分隔线），每行显示**会话标题 + 最近活动时间 + 短会话 id**。
+- **取消归档**：每行新增「取消归档」按钮，把会话移出归档集（只从 `workspace.json` 的 `global.archivedSessionIds` 移除该 id，不删任何数据，也不改动 `tables.workspaces[].sessionIds`——归档时 dsh 本来就没有把它移出）。
+- **搜索框**：按标题 / 会话 id / 项目名即时过滤。
+- **项目筛选下拉**：默认「全部项目」，可只看某个项目。
+- 顶部统计行：归档总数、磁盘占用合计；筛选时附「已筛选出 N 个」。
+- 分组为空时区分两种空态：「没有归档会话」与「没有符合搜索/筛选条件的会话」。
+
+### 变更
+
+- `GET /sclean/list` 的条目新增可选字段 `at`（最近活动时间，毫秒时间戳）、`project`（项目显示名）、`projectId`（项目 8 位短键）；响应新增 `projects`（项目清单与计数）、`totalDiskSize`、`noProject`。
+- 时间取值优先级：`rows.sessionListMetadata.lastPromptAt`（与 dsh 列表一致）→ `identity.createdAt` → 会话目录 mtime。
+- 项目名取 `tables.workspaces[*].title`，缺失时用 `path` 的最后一段目录名；`projectId` 取 workspace id 的 SHA-256 前 8 位，**不发送 workspace id 原文**。
+- 新增 `POST /sclean/unarchive`；`/sclean` 前缀路由改为**按子路径分发**（此前任意 `POST` 都按删除处理）。
+- 列表请求在解析投影缓存时同时取出标题与时间，聚合表命中后不再重复读单文件。
+
+### 安全
+
+- 取消归档与删除共用同源校验、会话 id 白名单、原子写与写后校验；取消归档不触碰任何会话数据。
+- 响应仍不含任何本机绝对路径；项目只以显示名与 8 位短键出现。
+
 ## [1.1.0] - 2026-10-23
 
 ### 新增
