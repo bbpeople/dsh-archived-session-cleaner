@@ -61,38 +61,36 @@ dsh 自带的删除通常只把会话移出列表，磁盘上的 `sessions/` 目
 
 ## 安装
 
-> **分发方式**：本插件按 dsh 的**组合包（bundle）**规范分发——仓库根自带 `cordis.patch.yml`（组合包 patch），`package.json` 用 `dsh.bundle.patch` 指向它，因此可以直接从 Git 安装，装好就自动注册插件行，不需要手工改 profile 的 `cordis.patch.yml`。本包无构建步骤（`lib/` 即产物），git 安装不会触发 pnpm 的构建放行（`allowBuilds`）提示。
+> **分发方式**：本插件以 dsh 的**组合包（bundle）**形式通过 Git 仓库分发（不进 npm 注册表）：仓库根自带 `cordis.patch.yml`，`package.json` 用 `dsh.bundle.patch` 指向它，装好后插件行由组合包自动注册，不需要手改 profile。本包无构建步骤（`lib/` 即产物），不会触发 pnpm 的构建脚本放行提示。
 
-### 通过插件页安装（推荐）
+### 通过插件页安装（推荐；桌面版只能走这里）
 
-1. 打开侧栏「插件」页，点「添加插件」（或右上角菜单里的「安装第三方插件」）。
-2. 在输入框粘贴：
+1. 侧栏点**插件** → **添加插件**（或点按钮右侧箭头 → **安装第三方插件**）。
+2. 在包名输入框粘贴：
 
 ```
 github:bbpeople/dsh-archived-session-cleaner
 ```
 
-3. 安装默认启用；**设置 → 插件** 里出现「会话清理」标签即可使用（界面没刷新就重启一次 dsh）。
+3. 点**安装**；检查通过后开始下载，装完点**立即启用**。
+4. 打开 **设置 → 插件**，看到「会话清理」标签即可用。标签没出现就重启一次 dsh（未启用 HMR 的 profile 在重启后才重组）。
 
-### 命令行安装
+> 桌面版（Electron）的 `desktop` profile 由应用独占管理，普通命令行执行 `dsh plugin --profile desktop ...` 会被拒绝（`profile "desktop" is managed exclusively by the Electron application`）；给桌面版装插件请用上面的插件页。
 
-`--profile` 为必填参数，取值通常是 `desktop` 或 `web`，即 `~/.dsh/profiles/` 下的目录名：
+### 命令行安装（`web` 等非 desktop profile）
 
 ```bash
-dsh plugin --profile desktop add github:bbpeople/dsh-archived-session-cleaner
+dsh plugin --profile web add github:bbpeople/dsh-archived-session-cleaner
 ```
-
-安装后重启 dsh（profile 未启用 HMR 时，profile 变更在重启后才生效）。
 
 ### 本地开发安装
 
-把本地仓库作为依赖链进 profile（改完代码重装或重启即可，无需再手动建 junction）：
+改完本地仓库直接装，两种方式都行：
 
-```bash
-dsh plugin --profile desktop add link:D:\xuexi\test\dsh-archived-session-cleaner
-```
+- 插件页 → 添加插件 → 粘贴本地绝对路径，例如 `D:\xuexi\test\dsh-archived-session-cleaner`（对话框接受本地目录/压缩包）；
+- `dsh plugin --profile web add link:D:\xuexi\test\dsh-archived-session-cleaner`（非 desktop profile）。
 
-> 旧版手工安装方式（`~/.dsh/plugins/` 放包 + `profiles/node_modules` 建 junction + 手写 profile 的 `cordis.patch.yml`）在一段时间内仍然可用，但已不再必要。
+> 旧版手工安装方式（`~/.dsh/plugins/` 放包 + `profiles/node_modules` 建 junction + 手写 profile 的 `cordis.patch.yml`）仍然可用，但已不再必要。
 
 ## 使用
 
@@ -158,7 +156,7 @@ MIT © bbpeople
 
 A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that adds a **Session Cleaner** tab under *Settings → Plugins*. It lists archived sessions grouped by project (title, last-activity time, on-disk size), with search, project filtering, unarchive and permanent delete. Deleting removes the on-disk session directory, the archived marker in `workspace.json`, the projection cache and the message-feedback entries; unarchiving only drops the archived marker.
 
-Distributed as a dsh **bundle** through Git — add `github:bbpeople/dsh-archived-session-cleaner` on the Plugins page, or run `dsh plugin --profile <name> add github:bbpeople/dsh-archived-session-cleaner` — and not published to the npm registry. It is unrelated to the third-party `dsh-session-cleaner` package on npm.
+Distributed as a dsh **bundle** through Git — on the *Plugins* page paste `github:bbpeople/dsh-archived-session-cleaner` (the Electron desktop profile can only be managed from the app), or run `dsh plugin --profile <name> add github:bbpeople/dsh-archived-session-cleaner` for other profiles — and not published to the npm registry. It is unrelated to the third-party `dsh-session-cleaner` package on npm.
 
 Safety: `/sclean` enforces a same-origin check (CSRF protection) and never returns local absolute paths (the project label is a display title, the project id is a SHA-256 prefix); only sessions in the archived set can be deleted or unarchived; sessions with an unterminated turn are skipped; session ids are validated against `^[A-Za-z0-9_-]{1,128}$`; JSON edits are written atomically and verified afterwards.
 
