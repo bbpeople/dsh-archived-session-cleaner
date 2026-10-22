@@ -4,7 +4,7 @@
 
 dsh 自带的删除通常只把会话移出列表，磁盘上的 `sessions/` 目录与 `storages/` 里的关联记录仍会残留。本插件用一套「先定位、再清除、后校验」的流程把这些痕迹真正抹掉，并对运行中的会话设了硬护栏。
 
-> **关于命名**：npm 上另有一个第三方包 [`dsh-session-cleaner`](https://www.npmjs.com/package/dsh-session-cleaner)（作者 fountunt）。本包与之**没有关联**，是各自独立的实现；本包因名称已被占用而定名为 `dsh-archived-session-cleaner`。
+> **关于命名**：另有一个第三方包 `dsh-session-cleaner`（作者 fountunt，见 [npm](https://www.npmjs.com/package/dsh-session-cleaner)）。本包与之**没有关联**，是各自独立的实现；本包为避免混淆而定名为 `dsh-archived-session-cleaner`。
 
 ## 功能
 
@@ -43,18 +43,30 @@ dsh 自带的删除通常只把会话移出列表，磁盘上的 `sessions/` 目
 
 ## 安装
 
-### 从 npm 安装
+> **分发方式**：本插件不从 npm 注册表分发，请用下面的 Git 方式安装。本包无构建步骤（`lib/` 即产物），git 安装不会触发 pnpm 的构建放行（`allowBuilds`）提示。
 
-```bash
-npm install dsh-archived-session-cleaner
+### 通过 Git 安装（推荐）
+
+在 dsh 的 **设置 → 插件 → 安装插件** 对话框中粘贴：
+
+```
+github:bbpeople/dsh-archived-session-cleaner
 ```
 
-然后在 profile 的 `cordis.patch.yml` 中增加一行（`name` 必须与实际安装的包名一致）：
+命令行等价形式（`--profile` 为必填参数，取值通常是 `desktop` 或 `web`，即 `~/.dsh/profiles/` 下的目录名）：
+
+```bash
+dsh plugin --profile desktop add github:bbpeople/dsh-archived-session-cleaner
+```
+
+安装后确认 profile 的 `cordis.patch.yml` 中有这一行（`name` 必须与实际安装的包名一致）：
 
 ```yaml
 - id: session-cleaner
   name: dsh-archived-session-cleaner
 ```
+
+然后重启 dsh。
 
 ### 本地开发（junction 软链）
 
@@ -90,7 +102,7 @@ host 侧在 `webServer` 上注册前缀路由 `/sclean`（相对当前页面路�
 ## 卸载
 
 1. 从 profile 的 `cordis.patch.yml` 中删掉 `session-cleaner` 那一行；
-2. 删除 `profiles/node_modules/dsh-archived-session-cleaner` 这个 junction（或 `npm uninstall dsh-archived-session-cleaner`）；
+2. 移除已安装的包：`dsh plugin --profile desktop remove dsh-archived-session-cleaner`（或在「设置 → 插件」里卸载）；以 junction 方式本地安装的直接删掉那个 junction；
 3. 重启 dsh。
 
 卸载插件**不会**动你的会话数据。
@@ -100,12 +112,13 @@ host 侧在 `webServer` 上注册前缀路由 `/sclean`（相对当前页面路�
 - 客户端（`lib/client.js`）是 web 平台模块包，通过 `window.__ModuleLoader__.load` 注册，挂载到 `settings.plugins.tab` 插槽（`order: 50`，标签名「会话清理」）。
 - 客户端 fiber 必须声明 `inject: ["slots"]`——新版本 dsh 只向客户端 fiber 注入已声明的服务，`slots` 属硬依赖。
 - host 侧（`lib/index.js`）兼容 `webServer` 尚未就绪的情况：取不到服务时通过 `ctx.on('webServer', …)` 延迟注册路由。
-- 本包无构建步骤，`lib/` 即发布产物。
+- 本包无构建步骤，`lib/` 即交付产物。
 
 ## 开发说明
 
+本包无构建步骤，`lib/` 即交付产物。提交前可用 `npm pack --dry-run` 核对会进入 tarball 的文件清单（本项目不发布到 npm，该命令仅用于核对内容）：
+
 ```bash
-# 检查将要发布的文件清单（不会真正发布）
 npm pack --dry-run
 ```
 
@@ -119,7 +132,7 @@ MIT © bbpeople
 
 A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that adds a **Session Cleaner** tab under *Settings → Plugins*. It lists archived sessions and permanently deletes them, removing the on-disk session directory, the archived marker in `workspace.json`, the projection cache and the message-feedback entries.
 
-Published as `dsh-archived-session-cleaner`; it is unrelated to the third-party `dsh-session-cleaner` package on npm.
+Distributed via Git — `dsh plugin --profile <name> add github:bbpeople/dsh-archived-session-cleaner` — and not published to the npm registry. It is unrelated to the third-party `dsh-session-cleaner` package on npm.
 
 Safety: `/sclean` enforces a same-origin check (CSRF protection) and never returns local absolute paths; only sessions in the archived set can be deleted; sessions with an unterminated turn are skipped; session ids are validated against `^[A-Za-z0-9_-]{1,128}$`; JSON edits are written atomically and verified afterwards.
 

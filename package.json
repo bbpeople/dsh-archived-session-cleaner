@@ -37,9 +37,6 @@
   "engines": {
     "node": ">=18"
   },
-  "publishConfig": {
-    "access": "public"
-  },
   "dsh": {
     "client": {
       "platform": "web"

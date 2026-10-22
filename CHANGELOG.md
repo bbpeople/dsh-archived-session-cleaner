@@ -7,7 +7,12 @@
 
 首个发布版本。
 
-> 包名说明：本包原拟名 `dsh-session-cleaner`，因该名称已被第三方包占用，改用 `dsh-archived-session-cleaner` 发布；功能与命名无关。
+> 包名说明：本包原拟名 `dsh-session-cleaner`，该名称已被第三方包占用，为避免混淆改用 `dsh-archived-session-cleaner`；功能与命名无关。
+
+### 分发
+
+- 通过 Git 仓库分发：`dsh plugin --profile <profile 名> add github:bbpeople/dsh-archived-session-cleaner`，或在「设置 → 插件」的安装对话框中粘贴该地址。
+- 不发布到 npm 注册表，因此没有 npm 版本记录；`package.json` 中面向 npm 发布的 `publishConfig` 字段已移除。
 
 ### 新增
 
