@@ -1,0 +1,20 @@
+# 依赖
+node_modules/
+
+# 包管理器产物
+*.tgz
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 编辑器与操作系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 本地环境与密钥（永不提交）
+.env
+.env.*
+*.local
