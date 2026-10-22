@@ -1,5 +1,5 @@
 {
-  "name": "dsh-session-cleaner",
+  "name": "dsh-archived-session-cleaner",
   "version": "1.0.0",
   "description": "DeepSeek Harness 插件：列出并永久删除已归档的会话（磁盘数据、归档标记、投影缓存与反馈记录一并清理）。",
   "type": "module",
@@ -21,17 +21,18 @@
     "plugin",
     "session",
     "session-cleaner",
-    "archive"
+    "archive",
+    "cleanup"
   ],
   "license": "MIT",
   "author": "bbpeople",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bbpeople/dsh-session-cleaner.git"
+    "url": "git+https://github.com/bbpeople/dsh-archived-session-cleaner.git"
   },
-  "homepage": "https://github.com/bbpeople/dsh-session-cleaner#readme",
+  "homepage": "https://github.com/bbpeople/dsh-archived-session-cleaner#readme",
   "bugs": {
-    "url": "https://github.com/bbpeople/dsh-session-cleaner/issues"
+    "url": "https://github.com/bbpeople/dsh-archived-session-cleaner/issues"
   },
   "engines": {
     "node": ">=18"

@@ -1,8 +1,10 @@
-# dsh-session-cleaner
+# dsh-archived-session-cleaner
 
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（dsh）插件：在「设置 → 插件」页新增一个 **会话清理** 标签页，列出已归档的会话并支持**永久删除**——磁盘数据、归档标记、投影缓存、消息反馈一并清理干净。
 
 dsh 自带的删除通常只把会话移出列表，磁盘上的 `sessions/` 目录与 `storages/` 里的关联记录仍会残留。本插件用一套「先定位、再清除、后校验」的流程把这些痕迹真正抹掉，并对运行中的会话设了硬护栏。
+
+> **关于命名**：npm 上另有一个第三方包 [`dsh-session-cleaner`](https://www.npmjs.com/package/dsh-session-cleaner)（作者 fountunt）。本包与之**没有关联**，是各自独立的实现；本包因名称已被占用而定名为 `dsh-archived-session-cleaner`。
 
 ## 功能
 
@@ -40,25 +42,25 @@ dsh 自带的删除通常只把会话移出列表，磁盘上的 `sessions/` 目
 ### 从 npm 安装
 
 ```bash
-npm install dsh-session-cleaner
+npm install dsh-archived-session-cleaner
 ```
 
-然后在 profile 的 `cordis.patch.yml` 中增加一行：
+然后在 profile 的 `cordis.patch.yml` 中增加一行（`name` 必须与实际安装的包名一致）：
 
 ```yaml
 - id: session-cleaner
-  name: dsh-session-cleaner
+  name: dsh-archived-session-cleaner
 ```
 
 ### 本地开发（junction 软链）
 
 ```powershell
 New-Item -ItemType Junction `
-  -Path "$HOME\.dsh\profiles\node_modules\dsh-session-cleaner" `
+  -Path "$HOME\.dsh\profiles\node_modules\dsh-archived-session-cleaner" `
   -Target "<本仓库目录>"
 ```
 
-同样在 `cordis.patch.yml` 里加上上面那段配置行，然后重启 dsh。
+同样在 `cordis.patch.yml` 里加上上面那段配置行（此时 `name` 用 junction 的名字），然后重启 dsh。
 
 ## 使用
 
@@ -84,7 +86,7 @@ host 侧在 `webServer` 上注册前缀路由 `/sclean`（相对当前页面路�
 ## 卸载
 
 1. 从 profile 的 `cordis.patch.yml` 中删掉 `session-cleaner` 那一行；
-2. 删除 `profiles/node_modules/dsh-session-cleaner` 这个 junction（或 `npm uninstall dsh-session-cleaner`）；
+2. 删除 `profiles/node_modules/dsh-archived-session-cleaner` 这个 junction（或 `npm uninstall dsh-archived-session-cleaner`）；
 3. 重启 dsh。
 
 卸载插件**不会**动你的会话数据。
@@ -112,6 +114,8 @@ MIT © bbpeople
 ### English
 
 A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that adds a **Session Cleaner** tab under *Settings → Plugins*. It lists archived sessions and permanently deletes them, removing the on-disk session directory, the archived marker in `workspace.json`, the projection cache and the message-feedback entries.
+
+Published as `dsh-archived-session-cleaner`; it is unrelated to the third-party `dsh-session-cleaner` package on npm.
 
 Safety: only sessions in the archived set can be deleted; sessions with an unterminated turn are skipped; session ids are validated against `^[A-Za-z0-9_-]{1,128}$`; JSON edits are written atomically and verified afterwards.
 
