@@ -24,11 +24,11 @@ dsh 自带的删除通常只把会话移出列表，磁盘上的 `sessions/` 目
 
 ## 取消归档做了什么
 
-「取消归档」只改一处：`storages/workspace.json` 里 `global.archivedSessionIds` 中的该会话 id。
+「取消归档」只改一处：把该会话 id 从归档集（`global.archivedSessionIds`）里移出，并且**优先调用 dsh 的 `workspaceRegistry.unarchiveSession(id)`**，由宿主自己更新内存快照并落盘。直接改 `storages/workspace.json` 在 dsh 0.2.1-rc.2 上会被内存快照回写覆盖（`archivedSessionIds` 还是冻结数组，`splice` 只会静默失败），因此只有在宿主没有该 API 时才回退到文件路径——响应里的 `via` 会写明实际走了哪条。
 
 - **不删数据**：`sessions/<project>/<id>/`、投影缓存、消息反馈一律不动；会话回到普通会话列表后仍可正常打开。
 - **不补 `sessionIds`**：dsh 归档时并没有把会话从 `tables.workspaces[].sessionIds` 中移出（实测归档中的会话仍在那里），所以无需补回；插件也不会为了取消归档去改写这部分。
-- **界面上可能要先重启 dsh**：运行中的 dsh 把归档集缓存在内存里。插件会尽力同步内存副本；同步不到时接口会返回 `needsRestart: true`，界面提示「重启后生效」——重启后该会话即出现在会话列表。插件自己的列表每次都从磁盘读，所以会立刻少掉这一条。
+- **走 store 时无需重启**：接口返回 `via: "workspace-registry"`，dsh 的内存与磁盘同时更新，会话立刻回到会话列表。只有旧版宿主走到文件兜底、内存副本同步不了时才返回 `needsRestart: true`，界面提示「重启后生效」。插件自己的列表每次都从磁盘读，所以无论如何都会立刻少掉这一条。
 - 与其他写操作一样走同源校验、会话 id 白名单、原子写与写后校验。
 ## 删除会清理哪些痕迹
 
@@ -41,6 +41,8 @@ dsh 自带的删除通常只把会话移出列表，磁盘上的 `sessions/` 目
 | `storages/session_projcache.json` | `tables.sessions[id]` 条目 |
 | `storages/session_projcache/sessions/<id>.json` | 单会话投影文件 |
 | `storages/message_feedback.json` | 该会话的点赞／点踩记录 |
+
+删除完成后还会调用各工作区的 `detachSession`，把该会话从 `tables.workspaces[].sessionIds` 里摘掉，避免留下点不开的空行；响应里的 `detachedFrom` 表示影响到了几个工作区。
 
 ## 安全护栏
 
@@ -111,12 +113,12 @@ host 侧在 `webServer` 上注册前缀路由 `/sclean`（相对当前页面路�
 | 方法与路径 | 说明 | 响应 |
 |---|---|---|
 | `GET /sclean/list` | 归档会话清单（含磁盘状态、标题、时间、项目归属） | `{ archived: [{ id, live, onDisk, diskSize, title?, at?, project?, projectId? }], projects: [{ id, title, count }], totalArchived, totalDiskSize, noProject }` |
-| `POST /sclean/unarchive` | body `{ "ids": ["<会话id>", …] }` | `{ results: [{ id, ok, error?, memSynced?, stillArchived? }], unarchived, skipped, needsRestart }` |
-| `POST /sclean/delete` | body `{ "ids": ["<会话id>", …] }` | `{ results: [{ id, ok, error?, diskRemoved?, memSynced?, resynced?, steps? }], deleted, skipped }` |
+| `POST /sclean/unarchive` | body `{ "ids": ["<会话id>", …] }` | `{ results: [{ id, ok, via?, alreadyUnarchived?, memSynced?, needsRestart?, error? }], unarchived, skipped, needsRestart }` |
+| `POST /sclean/delete` | body `{ "ids": ["<会话id>", …] }` | `{ results: [{ id, ok, via?, diskRemoved?, detachedFrom?, resynced?, steps?, error? }], deleted, skipped }` |
 
 路由按子路径分发：`POST /sclean/unarchive` 走取消归档，其余 `POST` 走删除。`title` / `at` / `project` / `projectId` 均为**可选**字段——取不到就不下发；`at` 是毫秒时间戳。
 
-`POST` 的每一条结果都带独立状态：`diskRemoved` 表示磁盘目录是否被删；`steps` 逐项记录 `workspace` / `projcache` / `projfile` / `feedback` 四步的成败——**某一步失败不会跳过其余步骤**；`needsRestart` 为 `true` 表示当前 dsh 进程的内存归档集没同步成功，界面需重启后才一致。
+`POST` 的每一条结果都带独立状态：`via` 说明归档标记是走 `workspace-registry`（dsh 公开 API，优先）还是 `workspace-json`（旧版兜底）；`diskRemoved` 表示磁盘目录是否被删；`detachedFrom` 是从几个工作区的 `sessionIds` 中摘除；`steps` 逐项记录 `workspace` / `projcache` / `projfile` / `feedback` 四步的成败——**某一步失败不会跳过其余步骤**；`alreadyUnarchived` 表示该 id 本来就不在归档集里（幂等成功）；`needsRestart` 为 `true` 仅出现在兜底路径内存未同步时，界面需重启后才一致。
 
 ## 环境变量
 

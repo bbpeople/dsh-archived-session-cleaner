@@ -3,6 +3,20 @@
 本文件记录本项目的所有重要变更，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.2.1] - 2026-10-23
+
+### 修复
+
+- **「取消归档」点了没反应**（dsh 0.2.1-rc.2 上必现）：此前插件直接改写 `storages/workspace.json`、并试图 `splice` 内存里的归档数组，但 dsh 是以**内存快照**为准持久化这个文件的，而 `archivedSessionIds` 返回的是**冻结数组**——文件改动会被下一次快照回写覆盖，内存修改静默失败，于是界面上一切正常、会话却仍留在归档里。现在取消归档与删除都**优先调用 `workspaceRegistry.unarchiveSession(id)`**，由 dsh 自己更新内存并落盘（幂等，无副作用）；仅当宿主没有该 API 时才回退到直接改文件，并在响应里用 `via` 说明走了哪条路径。
+- **磁盘占用恒显示 `0 B`**：会话日志的真实路径是 `sessions/<project>/<sessionId>/session.v4.jsonl.zstd`，旧代码只累加目录里扁平文件的 `size`，没有递归子目录，于是永远统计到 0。改为递归求和（深度上限 2，跳过读不到的条目）。
+
+### 变更
+
+- `POST /sclean/unarchive` 每条结果新增 `via`（`workspace-registry` | `workspace-json`）与 `alreadyUnarchived`（该 id 本来就不在归档集里时为 `true`，仍返回 `ok: true`）；`needsRestart` 现在只在兜底路径确实同步不了内存时才为 `true`，走 store 时总为 `false`，`memSynced` 同理。
+- `POST /sclean/delete` 每条结果新增 `via`、`detachedFrom`（从几个工作区的 `sessionIds` 中摘除了该会话）与 `steps`（`workspace` / `projcache` / `projfile` / `feedback` 四步各自成败）；删除成功后还会调用工作区的 `detachSession`，避免留下指向已删数据的会话行。
+- 删除后的写后校验收窄为「id 仍残留在 `workspace.json`」这一种并发覆盖情形，命中时会再调一次 store 或再清一次文件，结果里带 `resynced: true`。
+- 客户端提示语随 `via` / `alreadyUnarchived` / `needsRestart` 变化：走 store 时提示「会话已回到会话列表」，命中幂等分支时提示「该会话已不在归档集中」，只有兜底且内存未同步时才提示重启。
+
 ## [1.2.0] - 2026-10-23
 
 ### 新增
