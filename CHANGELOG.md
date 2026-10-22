@@ -3,6 +3,21 @@
 本文件记录本项目的所有重要变更，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.1.0] - 2026-10-23
+
+### 新增
+
+- 列表项优先显示**会话标题**（此前只显示会话 id）。标题取自 dsh 的投影缓存，两条来源依次尝试：先查聚合文件 `storages/session_projcache.json` 的 `tables.sessions[id].rows.title.val`（一次读盘覆盖多数会话），未命中再查单会话投影文件 `storages/session_projcache/sessions/<id>.json` 的 `record.rows.title.val`（归档较久的会话常常只留该文件）；两者都没有时回退显示会话 id。
+- 标题归一化：压掉换行/制表/控制字符与多余空白，超过 120 字符截断并加省略号。
+- 只读取生成标题 `rows.title`，**不读取** `titleInput`（完整首条输入，过长且含无关内容）。
+- 单条删除的二次确认弹窗带上会话标题，便于核对删除对象。
+
+### 变更
+
+- `GET /sclean/list` 的每个条目新增**可选**字段 `title`；取不到标题时不返回该字段，便于前端区分「无标题」与「空标题」。
+- 响应依旧不含任何本机绝对路径（`dirPath` 未回归）。
+
+
 ## [1.0.0] - 2026-10-22
 
 首个发布版本。
