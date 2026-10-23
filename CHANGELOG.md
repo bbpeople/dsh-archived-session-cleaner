@@ -3,6 +3,14 @@
 本文件记录本项目的所有重要变更，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.2.5] - 2026-10-23
+
+### 变更
+
+- 左侧导航里的分区名由「会话清理」改为「已归档会话」，页内大标题同步改名（与 dsh 自带分区一样，导航名与页内标题保持一致）。
+- 换掉外壳默认回落的「设置」齿轮图标：dsh 的左侧导航图标是按注册 id 硬编码的（`account` / `models` / `agent-presets` / `plugins` / `archived-sessions`），注册项也没有 icon 选项；插件保留自己的 id，改为隐藏齿轮、插入一枚 dsh 同款「归档箱」图标（16px 轮廓、stroke 1.3），并用 `MutationObserver` 在设置面板重渲染后自动重打补丁（失败则静默退回默认图标）。
+- 图标补丁与分区注册一起挂在 `ctx.effect` 生命周期上，插件停用/重载时撤销 observer。
+
 ## [1.2.4] - 2026-10-23
 
 ### 变更
