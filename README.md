@@ -1,6 +1,6 @@
 # dsh-archived-session-cleaner
 
-[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（dsh）插件：在「设置 → 插件」页新增一个 **会话清理** 标签页，按项目分组列出已归档的会话（标题、最近活动时间、磁盘占用），支持**搜索**、**项目筛选**、**取消归档**与**永久删除**——删除时磁盘数据、归档标记、投影缓存、消息反馈一并清理干净。
+[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（dsh）插件：在**设置左侧导航栏**新增一个 **会话清理** 独立分区，按项目分组列出已归档的会话（标题、最近活动时间、磁盘占用），支持**搜索**、**项目筛选**、**取消归档**与**永久删除**——删除时磁盘数据、归档标记、投影缓存、消息反馈一并清理干净。
 
 dsh 自带的删除通常只把会话移出列表，磁盘上的 `sessions/` 目录与 `storages/` 里的关联记录仍会残留。本插件用一套「先定位、再清除、后校验」的流程把这些痕迹真正抹掉，并对运行中的会话设了硬护栏。
 
@@ -73,7 +73,7 @@ github:bbpeople/dsh-archived-session-cleaner
 ```
 
 3. 点**安装**；检查通过后开始下载，装完点**立即启用**。
-4. 打开 **设置 → 插件**，看到「会话清理」标签即可用。标签没出现就重启一次 dsh（未启用 HMR 的 profile 在重启后才重组）。
+4. 打开**设置**，左侧导航出现「会话清理」入口即可用（排在「内置插件」之后）。没出现就重启一次 dsh（未启用 HMR 的 profile 在重启后才重组）。
 
 > 桌面版（Electron）的 `desktop` profile 由应用独占管理，普通命令行执行 `dsh plugin --profile desktop ...` 会被拒绝（`profile "desktop" is managed exclusively by the Electron application`）；给桌面版装插件请用上面的插件页。
 
@@ -94,7 +94,7 @@ dsh plugin --profile web add github:bbpeople/dsh-archived-session-cleaner
 
 ## 使用
 
-打开 **设置 → 插件 → 会话清理**：列表自动加载并按项目分组；顶部搜索框可按标题 / id / 项目名过滤，右侧下拉框可按项目筛选；点「刷新」重新读取。
+打开 **设置 → 会话清理**：列表自动加载并按项目分组；顶部搜索框可按标题 / id / 项目名过滤，右侧下拉框可按项目筛选；点「刷新」重新读取。
 
 - 「取消归档」— 把该会话移出归档集、回到普通会话列表（不删数据；若 dsh 内存里的归档集同步不到，按提示重启 dsh）
 - 「删除」— 永久删除该会话（二次确认，不可恢复）
@@ -133,7 +133,7 @@ host 侧在 `webServer` 上注册前缀路由 `/sclean`（相对当前页面路�
 
 ## 兼容性
 
-- 客户端（`lib/client.js`）是 web 平台模块包，通过 `window.__ModuleLoader__.load` 注册，挂载到 `settings.plugins.tab` 插槽（`order: 50`，标签名「会话清理」）。
+- 客户端（`lib/client.js`）是 web 平台模块包，通过 `window.__ModuleLoader__.load` 注册，注册到 `settings.section` 插槽（`order: 16`，左侧导航名「会话清理」），作为设置左侧导航里的独立分区。
 - 客户端 fiber 必须声明 `inject: ["slots"]`——新版本 dsh 只向客户端 fiber 注入已声明的服务，`slots` 属硬依赖。
 - host 侧（`lib/index.js`）兼容 `webServer` 尚未就绪的情况：取不到服务时通过 `ctx.on('webServer', …)` 延迟注册路由。
 - 本包无构建步骤，`lib/` 即交付产物。
@@ -154,7 +154,7 @@ MIT © bbpeople
 
 ### English
 
-A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that adds a **Session Cleaner** tab under *Settings → Plugins*. It lists archived sessions grouped by project (title, last-activity time, on-disk size), with search, project filtering, unarchive and permanent delete. Deleting removes the on-disk session directory, the archived marker in `workspace.json`, the projection cache and the message-feedback entries; unarchiving only drops the archived marker.
+A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that adds a **Session Cleaner** section to the *Settings* sidebar (next to *Plugins*). It lists archived sessions grouped by project (title, last-activity time, on-disk size), with search, project filtering, unarchive and permanent delete. Deleting removes the on-disk session directory, the archived marker in `workspace.json`, the projection cache and the message-feedback entries; unarchiving only drops the archived marker.
 
 Distributed as a dsh **bundle** through Git — on the *Plugins* page paste `github:bbpeople/dsh-archived-session-cleaner` (the Electron desktop profile can only be managed from the app), or run `dsh plugin --profile <name> add github:bbpeople/dsh-archived-session-cleaner` for other profiles — and not published to the npm registry. It is unrelated to the third-party `dsh-session-cleaner` package on npm.
 
