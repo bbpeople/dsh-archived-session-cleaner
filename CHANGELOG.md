@@ -3,6 +3,15 @@
 本文件记录本项目的所有重要变更，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.2.6] - 2026-10-24
+
+### 变更
+
+- 删除确认不再用系统 `window.confirm`（那个 Electron 原生确认框样式与 dsh 界面不搭），改为调用 dsh web 端共享模块 `@deepseek-ai/dsh-client-ui-primitives` 的 `Modal` + `Button`：遮罩、Esc 取消、点击遮罩关闭、焦点陷阱与焦点归还都是原生行为。
+- 弹窗按钮按原生规格：「取消」用 toolbar 变体（浅灰填充）并在右侧带 `esc` 提示；「删除」用 primary 几何 + 危险色填充（`--dsw-alias-state-error-primary`），默认焦点落在「删除」上，Enter 即确认；右上角关闭按钮按设计稿隐藏（Esc / 遮罩仍可取消）。
+- 单个与批量删除分别措辞：标题「删除这个归档会话？」／「删除这 N 个归档会话？」，说明里写明「磁盘数据与关联记录会被彻底清除，删除后无法恢复」。
+- 取不到 primitives 的旧版本 dsh 自动退回 `window.confirm`，功能不受影响。
+
 ## [1.2.5] - 2026-10-23
 
 ### 变更
