@@ -3,6 +3,17 @@
 本文件记录本项目的所有重要变更，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.2.7] - 2026-10-24
+
+### 修复
+
+- **确认弹窗可能不生效**：1.2.6 的弹窗依赖 dsh web 端共享模块 `@deepseek-ai/dsh-client-ui-primitives`，一旦该模块取不到就静默退回系统 `window.confirm`，看到的还是老弹窗。现在弹窗改由插件自绘，只用 `react` + `react-dom`（`createPortal` 挂到 `document.body`，避免被设置面板裁剪），不再依赖 dsh 内部模块表，任何版本都能显示。
+- 顺带修好上一版补丁把 `var module = { exports: {} };` 挤到同一行的问题。
+
+### 变更
+
+- 自绘弹窗的几何与配色照搬 dsh 自带 `Modal` / `Button`：`--dsw-radius-panel` 圆角、`--dsw-alias-bg-layer-2` 底、`--dsw-elevation-prominent` 阴影、遮罩 `--dsw-alias-bg-mask-1` + 模糊、36px 高按钮（`--dsw-radius-md`、14px 字号）、「取消」toolbar 灰底 + `esc` 提示、「删除」危险色实心 + 白字。
+- 交互：Esc 取消、点遮罩取消、默认焦点落在「删除」（Enter 直接确认）、删除中按钮禁用并显示「删除中…」。
 ## [1.2.6] - 2026-10-24
 
 ### 变更

@@ -133,7 +133,7 @@ host 侧在 `webServer` 上注册前缀路由 `/sclean`（相对当前页面路�
 
 ## 兼容性
 
-- 客户端（`lib/client.js`）是 web 平台模块包，通过 `window.__ModuleLoader__.load` 注册，注册到 `settings.section` 插槽（`order: 16`，左侧导航名「已归档会话」），作为设置左侧导航里的独立分区；删除确认弹窗走 web 端共享模块 `@deepseek-ai/dsh-client-ui-primitives` 的 `Modal` / `Button`（取不到时退回系统 `confirm`）；外壳的导航图标按 id 硬编码，插件没有 icon 选项，因此隐藏默认回落的「设置」齿轮并插入一枚 dsh 同款归档图标（`MutationObserver` 兜底重渲染）。
+- 客户端（`lib/client.js`）是 web 平台模块包，通过 `window.__ModuleLoader__.load` 注册，注册到 `settings.section` 插槽（`order: 16`，左侧导航名「已归档会话」），作为设置左侧导航里的独立分区；删除确认弹窗由插件自绘（`react-dom` 的 `createPortal` 挂到 body，几何与配色照搬 dsh 自带 `Modal`/`Button`，Esc / 点遮罩取消），不依赖 dsh 内部模块表；外壳的导航图标按 id 硬编码，插件没有 icon 选项，因此隐藏默认回落的「设置」齿轮并插入一枚 dsh 同款归档图标（`MutationObserver` 兜底重渲染）。
 - 客户端 fiber 必须声明 `inject: ["slots"]`——新版本 dsh 只向客户端 fiber 注入已声明的服务，`slots` 属硬依赖。
 - host 侧（`lib/index.js`）兼容 `webServer` 尚未就绪的情况：取不到服务时通过 `ctx.on('webServer', …)` 延迟注册路由。
 - 本包无构建步骤，`lib/` 即交付产物。
