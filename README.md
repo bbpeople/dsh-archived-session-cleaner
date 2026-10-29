@@ -44,6 +44,8 @@ dsh 自带的删除通常只把会话移出列表，磁盘上的 `sessions/` 目
 
 删除完成后还会调用各工作区的 `detachSession`，把该会话从 `tables.workspaces[].sessionIds` 里摘掉，避免留下点不开的空行；响应里的 `detachedFrom` 表示影响到了几个工作区。
 
+删除成功后，client 侧还会调用 dsh 客户端 `sessions` 服务的 `refresh()`，**重拉一次会话列表基线**。原因：dsh 窗口左侧的会话列表只在窗口加载时向宿主拉一份基线，之后只跟随宿主自己的增量事件；本插件是在宿主之外直接清数据的，宿主不会为此推送增量，因此不刷新的话左侧会残留一条已删除会话的旧行——桌面应用没有刷新入口，只能重启，用户看到的就像是「删了还在」「删完又回到未分组」，再归档一次还会把这条空 id 写回归档集，界面显示成「仅归档标记 / 0 B」。这条刷新路径与 dsh-claude-style 归档删除后的处理完全一致；宿主没有该 API 时静默降级，提示语回退为「重启 dsh 后会消失」。
+
 ## 安全护栏
 
 发布到公共环境前值得逐条知道的行为约束：
@@ -94,7 +96,7 @@ dsh plugin --profile web add github:bbpeople/dsh-archived-session-cleaner
 
 ## 使用
 
-打开 **设置 → 已归档会话**：列表自动加载并按项目分组；顶部搜索框可按标题 / id / 项目名过滤，右侧下拉框可按项目筛选；点「刷新」重新读取。点「删除」会先弹出确认框（dsh 原生样式：Esc 或点遮罩取消，Enter 确认），确认后才真正删除。删除顺序是先把 agent 登记与会话登记从 dsh 进程内摘掉（`entry.detach()`，等价「关闭会话」；摘不干净就直接拒绝并提示关闭会话/重启 dsh），再删磁盘数据、归档标记、工作区登记、投影缓存与反馈记录；最后还会兜底检查一次目录有没有被 dsh 的刷盘写回来（这是「删掉的会话又冒出来」的根因）。
+打开 **设置 → 已归档会话**：列表自动加载并按项目分组；顶部搜索框可按标题 / id / 项目名过滤，右侧下拉框可按项目筛选；点「刷新」重新读取。点「删除」会先弹出确认框（dsh 原生样式：Esc 或点遮罩取消，Enter 确认），确认后才真正删除。删除顺序是先把 agent 登记与会话登记从 dsh 进程内摘掉（`entry.detach()`，等价「关闭会话」；摘不干净就直接拒绝并提示关闭会话/重启 dsh），再删磁盘数据、归档标记、工作区登记、投影缓存与反馈记录；最后还会兜底检查一次目录有没有被 dsh 的刷盘写回来（这是「删掉的会话又冒出来」的根因）。删完 client 侧会让宿主的会话列表**重拉一次基线**，左侧那条旧行随即消失——不必再重启 dsh。
 
 - 「取消归档」— 把该会话移出归档集、回到普通会话列表（不删数据；若 dsh 内存里的归档集同步不到，按提示重启 dsh）
 - 「删除」— 永久删除该会话（二次确认，不可恢复）
@@ -154,7 +156,7 @@ MIT © bbpeople
 
 ### English
 
-A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that adds a **Session Cleaner** section to the *Settings* sidebar (next to *Plugins*). It lists archived sessions grouped by project (title, last-activity time, on-disk size), with search, project filtering, unarchive and permanent delete. Deleting removes the on-disk session directory, the archived marker in `workspace.json`, the projection cache and the message-feedback entries; unarchiving only drops the archived marker.
+A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that adds a **Session Cleaner** section to the *Settings* sidebar (next to *Plugins*). It lists archived sessions grouped by project (title, last-activity time, on-disk size), with search, project filtering, unarchive and permanent delete. Deleting removes the on-disk session directory, the archived marker in `workspace.json`, the projection cache and the message-feedback entries; unarchiving only drops the archived marker. After a successful delete the client asks the host to pull a fresh session-list baseline (`sessions.refresh()`), so the removed row leaves the sidebar without restarting the app — the desktop build has no reload entry point.
 
 Distributed as a dsh **bundle** through Git — on the *Plugins* page paste `github:bbpeople/dsh-archived-session-cleaner` (the Electron desktop profile can only be managed from the app), or run `dsh plugin --profile <name> add github:bbpeople/dsh-archived-session-cleaner` for other profiles — and not published to the npm registry. It is unrelated to the third-party `dsh-session-cleaner` package on npm.
 
